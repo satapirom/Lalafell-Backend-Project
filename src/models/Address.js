@@ -1,5 +1,5 @@
-const mongooose = require("mongoose");
-const Schema = mongooose.Schema;
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
 
 const addressSchema = new Schema({
     address: {
@@ -15,24 +15,28 @@ const addressSchema = new Schema({
     },
     country: {
         type: String,
-        required: true
+        required: true,
     },
     postalCode: {
         type: String,
-        required: true
+        required: true,
     },
     phone: {
         type: String,
-        required: true
+        required: true,
+        match: [/^\d{10}$/, 'Please enter a valid phone number'],
+        maxlength: 10
+
     },
     isDefault: {
         type: Boolean,
         default: false
     },
     user: {
-        type: mongooose.Schema.Types.ObjectId,
-        ref: "User"
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
     },
 }, { timestamps: true });
 
-module.exports = mongooose.model("Address", addressSchema);
+export default mongoose.model("Address", addressSchema);

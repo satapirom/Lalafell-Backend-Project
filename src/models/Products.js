@@ -21,7 +21,8 @@ const productSchema = new Schema({
         type: String
     },
     inventory: {
-        Number
+        type: Number,
+        required: true
     },
     images: [String],
 }, { timestamps: true });

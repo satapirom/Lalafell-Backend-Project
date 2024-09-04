@@ -1,5 +1,5 @@
-const mongooose = require("mongoose");
-const Schema = mongooose.Schema;
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
 
 const checkoutSchema = new Schema({
     user: {
@@ -13,27 +13,36 @@ const checkoutSchema = new Schema({
                 ref: "Products"
             },
             quantity: {
-                type: Number
+                type: Number,
+                required: true,
+                min: 1
             },
             price: {
-                type: Number
+                type: Number,
+                required: true,
             }
         }
     ],
     totalAmount: {
-        type: Number
+        type: Number,
+        required: true,
+        min: 1
     },
     address: {
         type: Schema.Types.ObjectId,
-        ref: "Address"
+        ref: "Address",
+        required: true
     },
     paymethod: {
         type: Schema.Types.ObjectId,
-        ref: "Paymethod"
+        ref: "Paymethod",
+        required: true
     },
     status: {
-        type: String
+        type: String,
+        enum: ['Pending', 'Completed', 'Cancelled'],
+        default: 'Pending'
     },
 }, { timestamps: true });
 
-module.exports = mongooose.model("Checkout", checkoutSchema)
+export default mongoose.model("Checkout", checkoutSchema);

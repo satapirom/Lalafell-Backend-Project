@@ -7,6 +7,12 @@ import mongoose from 'mongoose';
 import authRoute from './src/routes/authRoute.js';
 import userRoute from './src/routes/userRoute.js';
 import productRoute from './src/routes/productRoute.js';
+import orderRoute from './src/routes/orderRoute.js';
+import addressRoute from './src/routes/addressRoute.js';
+import payMethodRoute from './src/routes/payMethodRoute.js'
+import reviewRoute from './src/routes/reviewRoute.js'
+import checkoutRoute from './src/routes/checkoutRoute.js'
+
 
 dotenv.config(); // โหลดตัวแปรสภาพแวดล้อมจากไฟล์ .env
 
@@ -31,6 +37,11 @@ connectDB();
 app.use("/", authRoute);
 app.use("/", userRoute);
 app.use("/", productRoute);
+app.use("/", orderRoute);
+app.use("/", addressRoute);
+app.use("/", payMethodRoute);
+app.use("/", reviewRoute);
+app.use("/", checkoutRoute);
 
 // middlewares
 app.use((err, req, res, next) => {
