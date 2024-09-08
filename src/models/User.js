@@ -22,7 +22,7 @@ const userSchema = new Schema({
         type: Boolean,
         default: false
     },
-    img: {
+    images: {
         public_id: { type: String },
         url: { type: String }
     }

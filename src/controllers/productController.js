@@ -2,12 +2,19 @@ import Products from "../models/Products.js";
 import cloudinary from "../utils/cloudinary.js";
 
 const validateProductData = (data) => {
-    const { name, description, price, category, brand, inventory, images } = data;
-    if (!name || !description || !price || !category || !brand || !inventory || !images) {
-        return "All fields are required";
+    const { name, description, price, quantity, category, brand, inventory } = data;
+    if (!name || !description || !price || !quantity || !category || !brand || !inventory) {
+        return "All required fields must be provided";
     }
+
+    // ตรวจสอบว่า `price` และ `inventory` เป็นตัวเลข
+    if (isNaN(price) || isNaN(quantity) || isNaN(inventory)) {
+        return "Price and inventory must be numbers";
+    }
+
     return null;
 };
+
 
 // ดึงสินค้าทั้งหมด
 const getAllProducts = async (req, res) => {
@@ -46,36 +53,69 @@ const getProductById = async (req, res) => {
 
 // สร้างสินค้าใหม่
 const createProduct = async (req, res) => {
+    console.log('Request Body:', req.body);
+    console.log('Request Files:', req.files);
+
     const validationError = validateProductData(req.body);
     if (validationError) {
         return res.status(400).json({ error: true, message: validationError });
     }
 
-    const file = req.file;
-    if (!file) {
-        return res.status(400).json({ error: true, message: "No file uploaded" });
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: true, message: 'No images provided' });
     }
 
-    try {
-        const result = await cloudinary.uploader.upload(file.path, { folder: "products" });
+    const imageFiles = req.files;
+    const uploadedImages = [];
 
-        const newProduct = new Products({
-            ...req.body,
-            images: {
+    try {
+        // อัปโหลดไฟล์ไปยัง Cloudinary
+        for (const image of imageFiles) {
+            const result = await cloudinary.v2.uploader.upload(image.path, { folder: "products" });
+            uploadedImages.push({
                 public_id: result.public_id,
                 url: result.secure_url,
-            },
-            addBy: req.user.name,
-        });
+            });
+        }
 
-        await newProduct.save();
+        // แปลงค่า inventory จากสตริงเป็นตัวเลข
+        const inventory = parseInt(req.body.inventory, 10);
+        const quantity = parseInt(req.body.quantity, 10);
 
-        return res.status(201).json({ error: false, product: newProduct, message: "Product created successfully" });
+        // ค้นหาผลิตภัณฑ์ที่มีอยู่แล้ว
+        const { name, category, brand } = req.body; // หรือใช้ฟิลด์อื่นที่เป็นเอกลักษณ์
+        let product = await Products.findOne({ name, category, brand });
+
+        if (product) {
+            // หากผลิตภัณฑ์มีอยู่แล้ว ให้เพิ่ม inventory
+            product.inventory += inventory;
+            product.quantity += quantity;
+            product.images = uploadedImages; // เปลี่ยนแปลงภาพถ้าจำเป็น
+
+            // อัปเดตผลิตภัณฑ์
+            await product.save();
+            return res.json({ error: false, product, message: "Product updated successfully" });
+        } else {
+            // สร้างผลิตภัณฑ์ใหม่
+            product = new Products({
+                ...req.body,
+                quantity,
+                inventory, // ใช้ค่า inventory ที่แปลงแล้ว
+                images: uploadedImages,
+                // addedBy: req.user.name, // ใช้ข้อมูลที่ตรวจสอบแล้ว
+            });
+
+            await product.save();
+            console.log("Product saved successfully");
+
+            return res.status(201).json({ error: false, product, message: "Product created successfully" });
+        }
     } catch (error) {
-        console.error("Error creating product:", error.message);
+        console.error("Error creating or updating product:", error.message);
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
+
 
 // อัพเดตสินค้า
 const updateProduct = async (req, res) => {

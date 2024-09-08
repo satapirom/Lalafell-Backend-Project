@@ -12,6 +12,7 @@ import addressRoute from './src/routes/addressRoute.js';
 import payMethodRoute from './src/routes/payMethodRoute.js'
 import reviewRoute from './src/routes/reviewRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
+import bodyParser from 'body-parser';
 
 
 dotenv.config(); // โหลดตัวแปรสภาพแวดล้อมจากไฟล์ .env
@@ -29,6 +30,7 @@ if (!process.env.MONGO_URI) {
 // middlewares
 app.use(express.json());
 app.use(cors({ origin: "*" }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
 connectDB();

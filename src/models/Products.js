@@ -7,9 +7,14 @@ const productSchema = new Schema({
         required: true
     },
     description: {
-        type: String
+        type: String,
+        required: true
     },
     price: {
+        type: Number,
+        required: true
+    },
+    quantity: {
         type: Number,
         required: true
     },
@@ -18,13 +23,20 @@ const productSchema = new Schema({
         required: true
     },
     brand: {
-        type: String
+        type: String,
+        required: true
     },
     inventory: {
         type: Number,
         required: true
     },
-    images: [String],
+    images: [
+        {
+            public_id: { type: String },
+            url: { type: String }
+        }
+    ],
+    // addedBy: { type: String },
 }, { timestamps: true });
 
 export default mongoose.model("Product", productSchema);
