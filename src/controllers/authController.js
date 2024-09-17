@@ -1,94 +1,71 @@
 import { hashPassword, comparePassword } from '../utils/hash.js';
 import User from '../models/User.js';
 import { sign } from '../utils/token.js';
-import cloudinary from '../utils/cloudinary.js';
 
 // ลงทะเบียนผู้ใช้
 const register = async (req, res) => {
-    const { username, email, password, confirmPassword } = req.body;
-    const file = req.file;
+    console.log(req.body); // ตรวจสอบค่าที่ส่งมาจาก frontend
 
-    // Debugging logs
-    console.log("Request Body:", req.body);
-    console.log("Uploaded File:", file);
+    const { username, email, password, confirmPassword, termsAccepted } = req.body;
 
-    if (!username || !email || !password || !confirmPassword) {
-        return res
-            .status(400)
-            .json({ error: true, message: "Please provide all required fields" });
+    if (!username || !email || !password || !confirmPassword || !termsAccepted) {
+        return res.status(400).json({ error: true, message: "Please provide all required fields" });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ error: true, message: "Passwords do not match" });
     }
 
     try {
-        const userExists = await User.findOne({ email, username });
+        const userExists = await User.findOne({ email });
         if (userExists) {
-            return res
-                .status(400)
-                .json({ error: true, message: "User already exists" });
+            return res.status(400).json({ error: true, message: "User already exists" });
         }
 
         const hashedPassword = await hashPassword(password);
 
-        let imgData = null;
-        // Check if file is provided and upload to Cloudinary
-        if (file) {
-            console.log("Uploading file to Cloudinary...");
-            const result = await cloudinary.uploader.upload(file.path, {
-                folder: "users",
-            });
-            imgData = {
-                public_id: result.public_id,
-                url: result.secure_url,
-            };
-            console.log("Uploaded file data:", imgData);
-        } else {
-            console.log("No file uploaded, skipping image upload step.");
-        }
-
         const user = new User({
-            username: username, // เปลี่ยนจาก name เป็น username ให้ตรงกับ model
-            email: email,
+            username,
+            email,
             password: hashedPassword,
             confirmPassword: hashedPassword,
-            img: imgData,
+            termsAccepted,
+            termsVersion: "1.0"
         });
 
         await user.save();
-        console.log("User saved successfully!");
 
-        const accessToken = sign({ user: user._id });
+        const accessToken = sign({ userId: user._id });
 
         return res.status(201).json({
             error: false,
             user: {
-                id: user.id,
+                id: user._id,
                 username: user.username,
                 email: user.email,
-                img: user.img,
             },
             accessToken,
             message: "User created successfully",
         });
     } catch (error) {
         console.error(`Error during registration: ${error.message}`);
-        console.error(error); // เพิ่ม log error เต็มๆ
-        return res
-            .status(500)
-            .json({ error: true, message: "Internal Server Error" });
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
+
 
 // เข้าสู่ระบบ
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
 
-        if (!email || !password) {
+        if (!username || !password) {
             return res
                 .status(400)
-                .json({ error: true, message: "Please provide email and password" });
+                .json({ error: true, message: "Please provide username and password" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ error: true, message: "User not found" });
         }
@@ -117,8 +94,13 @@ const login = async (req, res) => {
     }
 };
 
+const logout = (req, res) => {
+    res.status(200).json({ message: "Logout successful" });
+};
+
 export default {
     register,
-    login
+    login,
+    logout
 };
 

@@ -15,19 +15,20 @@ const validateProductData = (data) => {
     return null;
 };
 
-
-// ดึงสินค้าทั้งหมด
 const getAllProducts = async (req, res) => {
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
 
     try {
+        // สร้างการค้นหาผลิตภัณฑ์ที่มีการเรียงลำดับตามวันที่สร้าง
         let query = Products.find().sort({ createdAt: -1 });
 
+        // ถ้ามี limit ให้ใช้ limit
         if (limit) {
             query = query.limit(limit);
         }
 
-        const products = await query.exec(); // ใช้ .exec() เพื่อให้คำค้นหาเสร็จสิ้น
+        // ดึงข้อมูลผลิตภัณฑ์
+        const products = await query.exec();
 
         return res.json({ error: false, products });
     } catch (error) {
@@ -36,7 +37,7 @@ const getAllProducts = async (req, res) => {
     }
 };
 
-// ดึงสินค้าตาม ID
+
 const getProductById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -51,7 +52,7 @@ const getProductById = async (req, res) => {
     }
 };
 
-// สร้างสินค้าใหม่
+//for admin
 const createProduct = async (req, res) => {
     console.log('Request Body:', req.body);
     console.log('Request Files:', req.files);
@@ -78,12 +79,12 @@ const createProduct = async (req, res) => {
             });
         }
 
-        // แปลงค่า inventory จากสตริงเป็นตัวเลข
+        // แปลงค่า inventory และ quantity จากสตริงเป็นตัวเลข
         const inventory = parseInt(req.body.inventory, 10);
         const quantity = parseInt(req.body.quantity, 10);
 
         // ค้นหาผลิตภัณฑ์ที่มีอยู่แล้ว
-        const { name, category, brand } = req.body; // หรือใช้ฟิลด์อื่นที่เป็นเอกลักษณ์
+        const { name, category, brand } = req.body;
         let product = await Products.findOne({ name, category, brand });
 
         if (product) {
@@ -104,6 +105,8 @@ const createProduct = async (req, res) => {
                 images: uploadedImages,
                 // addedBy: req.user.name, // ใช้ข้อมูลที่ตรวจสอบแล้ว
             });
+            console.error('Error creating or updating product:', error.message);
+
 
             await product.save();
             console.log("Product saved successfully");
@@ -115,7 +118,6 @@ const createProduct = async (req, res) => {
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
-
 
 // อัพเดตสินค้า
 const updateProduct = async (req, res) => {
@@ -148,14 +150,23 @@ const deleteProduct = async (req, res) => {
     const { productId } = req.params;
 
     try {
-        const product = await Product.findOne({ _id: productId, addBy: user.id });
+        // ค้นหาผลิตภัณฑ์โดยตรวจสอบทั้ง productId และ addedBy เพื่อให้แน่ใจว่าผู้ใช้คนนี้เป็นคนเพิ่มผลิตภัณฑ์นี้
+        const product = await Products.findOne({ _id: productId });
         if (!product) {
             return res
                 .status(404)
                 .json({ error: true, message: "Product not found" });
         }
 
-        await Product.findByIdAndDelete(productId);
+        // ลบภาพที่เก็บไว้ใน Cloudinary ก่อนลบผลิตภัณฑ์
+        if (product.images && product.images.length > 0) {
+            for (const image of product.images) {
+                await cloudinary.v2.uploader.destroy(image.public_id);
+            }
+        }
+
+        // ลบผลิตภัณฑ์
+        await Products.findByIdAndDelete(productId);
 
         return res.json({
             error: false,
@@ -169,6 +180,7 @@ const deleteProduct = async (req, res) => {
         });
     }
 };
+
 
 // ค้นหาสินค้า
 const searchProducts = async (req, res) => {

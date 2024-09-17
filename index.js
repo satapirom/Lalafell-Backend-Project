@@ -6,13 +6,15 @@ import connectDB from './src/utils/connectDB.js';
 import mongoose from 'mongoose';
 import authRoute from './src/routes/authRoute.js';
 import userRoute from './src/routes/userRoute.js';
-import productRoute from './src/routes/productRoute.js';
 import orderRoute from './src/routes/orderRoute.js';
 import addressRoute from './src/routes/addressRoute.js';
 import payMethodRoute from './src/routes/payMethodRoute.js'
 import reviewRoute from './src/routes/reviewRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
 import bodyParser from 'body-parser';
+
+// admin
+import productsRoute from './src/routes/productsRoute.js';
 
 
 dotenv.config(); // โหลดตัวแปรสภาพแวดล้อมจากไฟล์ .env
@@ -29,7 +31,12 @@ if (!process.env.MONGO_URI) {
 
 // middlewares
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+app.use(cors({
+    origin: 'http://localhost:5173', // เปลี่ยนเป็นโดเมนของคุณ
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
@@ -38,12 +45,15 @@ connectDB();
 // เส้นทาง API ต่างๆ
 app.use("/", authRoute);
 app.use("/", userRoute);
-app.use("/", productRoute);
+// app.use("/", productRoute);
 app.use("/", orderRoute);
 app.use("/", addressRoute);
 app.use("/", payMethodRoute);
 app.use("/", reviewRoute);
 app.use("/", checkoutRoute);
+
+// admin
+app.use("/", productsRoute);
 
 // middlewares
 app.use((err, req, res, next) => {

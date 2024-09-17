@@ -1,31 +1,42 @@
 import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 
-const userSchema = new Schema({
+const UserSchema = new Schema({
     username: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        trim: true
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        trim: true,
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, 'Invalid email format']
     },
     password: {
         type: String,
+        required: true,
+        minlength: 8
+    },
+    termsAccepted: {
+        type: Boolean,
         required: true
     },
     confirmPassword: {
         type: String,
         required: true
     },
-    isAdmin: {
-        type: Boolean,
-        default: false
+    termsAcceptedAt: {
+        type: Date,
+        default: Date.now
     },
-    images: {
-        public_id: { type: String },
-        url: { type: String }
-    }
+    termsVersion: {
+        type: String,
+        default: '1.0'
+    },
 }, { timestamps: true });
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model("User", UserSchema);
