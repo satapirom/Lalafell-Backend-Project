@@ -12,6 +12,7 @@ import payMethodRoute from './src/routes/payMethodRoute.js'
 import reviewRoute from './src/routes/reviewRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
 import bodyParser from 'body-parser';
+import cloudinary from './src/utils/cloudinary.js';
 
 // admin
 import productsRoute from './src/routes/productsRoute.js';
