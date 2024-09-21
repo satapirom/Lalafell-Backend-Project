@@ -1,26 +1,29 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
-const ReviweSchema = new Schema({
+const ReviewSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
-    products: {
+    product: {
         type: Schema.Types.ObjectId,
-        ref: "Products",
+        ref: "Product",
         required: true
-
     },
     rating: {
         type: Number,
+        required: true,
         min: 1,
         max: 5
     },
-    Comment: {
-        type: String
+    comment: {  // Make sure this field is named 'comment'
+        type: String,
+        required: true
     }
 }, { timestamps: true });
 
-export default mongoose.model("Review", ReviweSchema);
+ReviewSchema.index({ user: 1, product: 1 });
+
+export default mongoose.model("Review", ReviewSchema);

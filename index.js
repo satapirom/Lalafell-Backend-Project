@@ -9,10 +9,10 @@ import userRoute from './src/routes/userRoute.js';
 import orderRoute from './src/routes/orderRoute.js';
 import addressRoute from './src/routes/addressRoute.js';
 import payMethodRoute from './src/routes/payMethodRoute.js'
-import reviewRoute from './src/routes/reviewRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
+import reviweRoute from './src/routes/reviewRoute.js'
 import bodyParser from 'body-parser';
-import cloudinary from './src/utils/cloudinary.js';
+
 
 // admin
 import productsRoute from './src/routes/productsRoute.js';
@@ -50,8 +50,8 @@ app.use("/", userRoute);
 app.use("/", orderRoute);
 app.use("/", addressRoute);
 app.use("/", payMethodRoute);
-app.use("/", reviewRoute);
 app.use("/", checkoutRoute);
+app.use("/", reviweRoute);
 
 // admin
 app.use("/", productsRoute);

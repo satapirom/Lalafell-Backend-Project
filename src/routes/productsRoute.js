@@ -16,9 +16,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const router = express.Router();
-router.post('/products', upload.array('images'), productsController.uploadProduct);
+router.post('/products', adminAuthMiddleware, upload.array('images'), productsController.uploadProduct);
 router.get('/products', productsController.getProducts);
 router.get('/products', productsController.getProductFilter);
-router.get('/products/:Id', productsController.getProductByID);
+router.get('/products/:id', productsController.getProductByID);
 
 export default router;

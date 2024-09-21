@@ -82,21 +82,21 @@ const getProducts = async (req, res) => {
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
-
 const getProductByID = async (req, res) => {
     const { id } = req.params;
+    console.log('Received ID:', id);
     try {
-        const product = Product.findById(id);
+        const product = await Product.findById(id);
+        console.log('Product found:', product);
         if (!product) {
-            return res.status(404).json({ error: true, message: 'Product not found' })
+            return res.status(404).json({ error: true, message: 'Product not found' });
         }
-        return res.json({ error: false, product })
+        return res.json({ error: false, product });
     } catch (error) {
         console.error("Error fetching product:", error.message);
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
-
-}
+};
 
 const getProductFilter = async (req, res) => {
     const { limit, sort, size, category, page } = req.query;
