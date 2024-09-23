@@ -13,64 +13,65 @@ import checkoutRoute from './src/routes/checkoutRoute.js'
 import reviweRoute from './src/routes/reviewRoute.js'
 import bodyParser from 'body-parser';
 
-
 // admin
 import productsRoute from './src/routes/productsRoute.js';
 
-
-dotenv.config(); // โหลดตัวแปรสภาพแวดล้อมจากไฟล์ .env
+dotenv.config();
 
 const app = express();
 
 app.use(morgan('combined'));
 
-// ตรวจสอบว่าตัวแปร MONGO_URI ถูกกำหนดหรือไม่
 if (!process.env.MONGO_URI) {
     console.error('Error: MONGO_URI is not defined in the environment variables.');
-    process.exit(1); // ออกจากโปรแกรมถ้าตัวแปร MONGO_URI ไม่ถูกกำหนด
+    process.exit(1);
 }
 
-// middlewares
-app.use(express.json());
+// CORS configuration
+const allowedOrigins = ['https://lalafell-frontend-project.vercel.app', 'http://localhost:3000'];
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5000',
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
 
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
 connectDB();
 
-// เส้นทาง API ต่างๆ
+// Routes
 app.use("/", authRoute);
 app.use("/", userRoute);
-// app.use("/", productRoute);
 app.use("/", orderRoute);
 app.use("/", addressRoute);
 app.use("/", payMethodRoute);
 app.use("/", checkoutRoute);
 app.use("/", reviweRoute);
-
-// admin
 app.use("/", productsRoute);
 
-// middlewares
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send({ message: 'Something went wrong!' });
 });
 
-// start server
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} ✅🌎`);
 });
 
-// close server
+// Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('SIGINT signal received: closing HTTP server');
-    await mongoose.connection.close(); // ปิดการเชื่อมต่อ MongoDB
-    process.exit(0); // ออกจากโปรแกรม
+    await mongoose.connection.close();
+    process.exit(0);
 });
