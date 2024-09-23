@@ -31,7 +31,7 @@ if (!process.env.MONGO_URI) {
 }
 
 // middlewares
-cors corsOptions = {
+const corsOptions = {
     origin: '*',
     credentials: true,
     optionsSuccessStatus: 200
