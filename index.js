@@ -31,13 +31,12 @@ if (!process.env.MONGO_URI) {
 }
 
 // middlewares
-app.use(cors({
+cors corsOptions = {
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-
+    credentials: true,
+    optionsSuccessStatus: 200
+}
+app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
