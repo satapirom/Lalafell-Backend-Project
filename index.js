@@ -12,83 +12,65 @@ import payMethodRoute from './src/routes/payMethodRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
 import reviweRoute from './src/routes/reviewRoute.js'
 import bodyParser from 'body-parser';
+
+
+// admin
 import productsRoute from './src/routes/productsRoute.js';
 
-dotenv.config();
+
+dotenv.config(); // โหลดตัวแปรสภาพแวดล้อมจากไฟล์ .env
 
 const app = express();
 
 app.use(morgan('combined'));
 
+// ตรวจสอบว่าตัวแปร MONGO_URI ถูกกำหนดหรือไม่
 if (!process.env.MONGO_URI) {
     console.error('Error: MONGO_URI is not defined in the environment variables.');
-    process.exit(1);
+    process.exit(1); // ออกจากโปรแกรมถ้าตัวแปร MONGO_URI ไม่ถูกกำหนด
 }
 
-// Enhanced CORS configuration
-const allowedOrigins = ['https://lalafell-frontend-project.vercel.app', 'http://localhost:3000'];
-
+// middlewares
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
-// Pre-flight requests
-app.options('*', cors());
-
-app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
 connectDB();
 
-// Middleware to add CORS headers to every response
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', true);
-    next();
-});
-
-// Routes
+// เส้นทาง API ต่างๆ
 app.use("/", authRoute);
 app.use("/", userRoute);
+// app.use("/", productRoute);
 app.use("/", orderRoute);
 app.use("/", addressRoute);
 app.use("/", payMethodRoute);
 app.use("/", checkoutRoute);
 app.use("/", reviweRoute);
+
+// admin
 app.use("/", productsRoute);
 
-// Error handling middleware
+// middlewares
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send({ message: 'Something went wrong!' });
 });
 
-// Start server
+// start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} ✅🌎`);
 });
 
-// Graceful shutdown
+// close server
 process.on('SIGINT', async () => {
     console.log('SIGINT signal received: closing HTTP server');
-    await mongoose.connection.close();
-    process.exit(0);
+    await mongoose.connection.close(); // ปิดการเชื่อมต่อ MongoDB
+    process.exit(0); // ออกจากโปรแกรม
 });
