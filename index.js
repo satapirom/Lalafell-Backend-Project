@@ -12,8 +12,6 @@ import payMethodRoute from './src/routes/payMethodRoute.js'
 import checkoutRoute from './src/routes/checkoutRoute.js'
 import reviweRoute from './src/routes/reviewRoute.js'
 import bodyParser from 'body-parser';
-
-// admin
 import productsRoute from './src/routes/productsRoute.js';
 
 dotenv.config();
@@ -27,25 +25,44 @@ if (!process.env.MONGO_URI) {
     process.exit(1);
 }
 
-// CORS configuration
+// Enhanced CORS configuration
 const allowedOrigins = ['https://lalafell-frontend-project.vercel.app', 'http://localhost:3000'];
+
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
         }
+        return callback(null, true);
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
+
+// Pre-flight requests
+app.options('*', cors());
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
 connectDB();
+
+// Middleware to add CORS headers to every response
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', true);
+    next();
+});
 
 // Routes
 app.use("/", authRoute);
