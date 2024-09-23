@@ -31,12 +31,14 @@ if (!process.env.MONGO_URI) {
 }
 
 // middlewares
-const corsOptions = {
-    origin: '*',
-    credentials: true,
-    optionsSuccessStatus: 200
-}
-app.use(cors(corsOptions));
+app.use(express.json());
+app.use(
+    cors({
+        origin: "*",
+    })
+);
+
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // connect to MongoDB
