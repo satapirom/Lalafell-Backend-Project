@@ -29,6 +29,10 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
+    profileImage: {
+        type: String,
+        default: '../images/avata-profile.png'  // ตั้งค่าเริ่มต้นสำหรับรูปโปรไฟล์
+    },
     termsAcceptedAt: {
         type: Date,
         default: Date.now

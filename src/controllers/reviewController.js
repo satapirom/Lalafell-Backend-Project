@@ -4,7 +4,7 @@ import Product from '../models/Products.js';
 export const createReview = async (req, res) => {
     try {
         const productId = req.params.id;
-        const { comment, rating } = req.body;  // Changed 'text' to 'comment'
+        const { comment, rating } = req.body;
         const userId = req.user.id;
 
         if (!comment || !rating) {
@@ -19,18 +19,31 @@ export const createReview = async (req, res) => {
         const newReview = new Review({
             product: productId,
             user: userId,
-            comment,  // Changed 'text' to 'comment'
+            comment,
             rating
         });
 
         await newReview.save();
+
+        // Fetch user information
+        const user = await User.findById(userId).select('username profileImage');
 
         // Update product's review count and average rating
         product.reviews = (product.reviews || 0) + 1;
         product.rating = await calculateAverageRating(productId);
         await product.save();
 
-        res.status(201).json({ success: true, review: newReview });
+        // Include user information in the response
+        const reviewWithUser = {
+            ...newReview.toObject(),
+            user: {
+                _id: user._id,
+                username: user.username,
+                profileImage: user.profileImage
+            }
+        };
+
+        res.status(201).json({ success: true, review: reviewWithUser });
     } catch (error) {
         console.error('Error creating review:', error);
         res.status(500).json({ success: false, message: 'Error creating review', error: error.message });
@@ -38,18 +51,17 @@ export const createReview = async (req, res) => {
 };
 
 
-
-
-const getReviewsByProduct = async (req, res) => {
-    const { productId } = req.params;
-
+export const getReviewsByProduct = async (req, res) => {
     try {
+        const productId = req.params.id;
         const reviews = await Review.find({ product: productId })
-            .populate('user', 'username');
-        return res.status(200).json(reviews);
+            .populate('user', 'username profileImage')
+            .sort({ createdAt: -1 });  // Sort by newest first
+
+        res.status(200).json(reviews);
     } catch (error) {
         console.error('Error fetching reviews:', error);
-        return res.status(500).json({ message: 'Error fetching reviews', error: error.message });
+        res.status(500).json({ success: false, message: 'Error fetching reviews', error: error.message });
     }
 };
 

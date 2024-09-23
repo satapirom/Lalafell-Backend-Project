@@ -6,7 +6,7 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 router.post('/products/:id/reviews', authMiddleware, reviewController.createReview);
-router.get('/products/:id/reviews', authMiddleware, reviewController.getReviewsByProduct);
+router.get('/products/:id/reviews', reviewController.getReviewsByProduct);
 router.delete('/reviews/:reviewId', authMiddleware, reviewController.deleteReview);
 
 export default router;
