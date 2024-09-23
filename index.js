@@ -33,8 +33,7 @@ if (!process.env.MONGO_URI) {
 // middlewares
 app.use(express.json());
 app.use(cors({
-    origin: '*', // เปลี่ยนเป็นโดเมนของคุณ
-    // origin: ['https://lalafell-frontend-project-nddk.vercel.app'], // เปลี่ยนเมื่อ Deploy แล้ว
+    origin: process.env.FRONTEND_URL || 'http://localhost:5000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
