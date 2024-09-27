@@ -2,8 +2,8 @@ import Address from "../models/Address.js";
 import User from "../models/User.js";
 
 const ValidateAddress = (data) => {
-    const { address, street, city, country, postalCode, phone } = data;
-    if (!address || !street || !city || !country || !postalCode || !phone) {
+    const { name, phone, street, city, country, postalCode } = data;
+    if (!name || !phone || !street || !city || !country || !postalCode) {
         return "All fields are required";
     }
     return null;
@@ -12,91 +12,65 @@ const ValidateAddress = (data) => {
 const createAddress = async (req, res) => {
     const validationError = ValidateAddress(req.body);
     if (validationError) {
-        return res.
-            status(400).
-            json({ error: true, message: validationError });
+        return res.status(400).json({ error: true, message: validationError });
     }
 
-    const { address, street, city, country, postalCode, phone } = req.body;
+    const { name, phone, street, city, country, postalCode, isDefault } = req.body;
 
     try {
-        const userExists = await User.findById(req.body.user);
-        if (!userExists) {
-            return res.status(404).json({
-                error: true,
-                message: `User with ID ${req.body.user} not found`
-            });
-        }
+        const userId = req.user._id;
 
-        const addressExists = await Address.findOne({ address, user: req.body.user });
-        if (addressExists) {
-            return res.status(400).json({
-                error: true,
-                message: "Address already exists"
-            });
+        // If this address is marked as default, unset other default addresses
+        if (isDefault) {
+            await Address.updateMany({ user: userId, isDefault: true }, { isDefault: false });
         }
 
         const newAddress = new Address({
-            address,
+            name,
             street,
             city,
             country,
             postalCode,
             phone,
-            isDefault: false,
-            user: req.body.user
+            isDefault: !!isDefault,
+            user: userId
         });
 
         const savedAddress = await newAddress.save();
-        return res.
-            status(201).
-            json({ error: false, message: "Address created successfully", data: savedAddress });
-
+        return res.status(201).json({ error: false, message: "Address created successfully", data: savedAddress });
     } catch (error) {
-        console.error(`Error creating address: ${error.message}`)
-        return res.
-            status(500).
-            json({ error: true, message: "Internal Server Error" });
+        console.error(`Error creating address: ${error.message}`);
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
 
-const getAddresses = async (req, res) => {
-    const { userId } = req.params;
+const getUserAddresses = async (req, res) => {
     try {
-        const addresses = await Address.find({ user: userId });
+        const addresses = await Address.find({ user: req.user.id });
         return res.json({ error: false, addresses });
     } catch (error) {
-        console.error(`Error getting addresses: ${error.message}`);
-        return res.
-            status(500).
-            json({ error: true, message: "Internal Server Error" });
+        console.error(`Error getting user addresses: ${error.message}`);
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
 
-const getAddressesById = async (req, res) => {
-    const { addressId } = req.params;
-    try {
-        const address = await Address.findById(addressId);
+const updateUserAddress = async (req, res) => {
+    const { id } = req.params;
+    const { name, street, city, country, postalCode, phone, isDefault } = req.body;
 
-        if (!address) {
-            return res.status(404).json({ error: true, message: "Address not found" });
+    console.log('Updating address:', id);
+    console.log('Request body:', req.body);
+
+    try {
+        const addressToUpdate = await Address.findOne({ _id: id, user: req.user.id });
+
+        if (!addressToUpdate) {
+            console.log('Address not found:', id);
+            return res.status(404).json({ error: true, message: "Address not found or you don't have permission to update it" });
         }
-        return res.json({ error: false, address });
 
-    } catch (error) {
-        console.error(`Error getting address: ${error.message}`);
-        return res.
-            status(500).
-            json({ error: true, message: "Internal Server Error" });
-    }
-};
-
-const updateAddress = async (req, res) => {
-    const { addressId } = req.params;
-    const { address, street, city, country, postalCode, phone, isDefault } = req.body;
-    try {
-        const updateAddress = await Address.findByIdAndUpdate(addressId, {
-            address,
+        const updatedAddress = await Address.findByIdAndUpdate(id, {
+            name,
             street,
             city,
             country,
@@ -105,40 +79,41 @@ const updateAddress = async (req, res) => {
             isDefault
         }, { new: true });
 
-        if (!updateAddress) {
-            return res.status(404).json({ error: true, message: "Address not found" });
-        }
+        console.log('Updated address:', updatedAddress);
 
-        return res.json({ error: false, message: "Address updated successfully", data: updateAddress });
+        return res.json({ error: false, message: "Address updated successfully", data: updatedAddress });
     } catch (error) {
-        console.error(`Error updating address: ${error.message}`);
-        return res.
-            status(500).
-            json({ error: true, message: "Internal Server Error" });
+        console.error(`Error updating user address: ${error.message}`);
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
 
-const deleteAddress = async (req, res) => {
-    const { addressId } = req.params;
+const deleteUserAddress = async (req, res) => {
     try {
-        const address = await Address.findByIdAndDelete(addressId);
+        const addressId = req.params.id;
+        const userId = req.user.id; // Assuming you have middleware that sets the user
+
+        const address = await Address.findOne({ _id: addressId, user: userId });
+
         if (!address) {
-            return res.status(404).json({ error: true, message: "Address not found" });
+            return res.status(404).json({ error: true, message: "Address not found or you don't have permission to delete it" });
         }
-        return res.json({ error: false, message: "Address deleted successfully" });
+
+        await Address.findByIdAndDelete(addressId);
+        res.json({ error: false, message: "Address deleted successfully" });
     } catch (error) {
-        console.error(`Error deleting address: ${error.message}`);
-        return res.
-            status(500).
-            json({ error: true, message: "Internal Server Error" });
+        console.error(`Error deleting user address: ${error.message}`);
+        res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
+
 
 const addressController = {
     createAddress,
-    getAddresses,
-    getAddressesById,
-    updateAddress,
-    deleteAddress
+    getUserAddresses,
+    updateUserAddress,
+    deleteUserAddress
 };
 export default addressController;
+
+

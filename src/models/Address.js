@@ -2,24 +2,9 @@ import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
 const addressSchema = new Schema({
-    address: {
+    name: {
         type: String,
         required: true
-    },
-    street: {
-        type: String
-    },
-    city: {
-        type: String,
-        required: true
-    },
-    country: {
-        type: String,
-        required: true,
-    },
-    postalCode: {
-        type: String,
-        required: true,
     },
     phone: {
         type: String,
@@ -28,14 +13,29 @@ const addressSchema = new Schema({
         maxlength: 10
 
     },
+    street: {
+        type: String
+    },
+    city: {
+        type: String,
+        required: true
+    },
+    postalCode: {
+        type: String,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
     isDefault: {
         type: Boolean,
         default: false
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
+        required: true,
         ref: "User",
-        required: true
     },
 }, { timestamps: true });
 

@@ -11,13 +11,22 @@ const getUser = async (req, res) => {
 };
 
 const getProfile = async (req, res) => {
-    const user = req.user;
+    const userId = req.user._id;  // ใช้ _id ของผู้ใช้ปัจจุบัน
     try {
+        // ดึงข้อมูลผู้ใช้จากฐานข้อมูลโดยใช้ ID ของผู้ใช้
+        const user = await User.findById(userId).select('username email profileImage coverImage'); // ดึงฟิลด์ที่ต้องการ
+
+        if (!user) {
+            return res.status(404).json({ error: true, message: "User not found" });
+        }
+
         return res.json({ error: false, myUser: user });
     } catch (error) {
+        console.error('Error fetching profile:', error);
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
+
 
 const updateProfile = async (req, res) => {
     const user = req.user;
@@ -37,28 +46,61 @@ const updateProfile = async (req, res) => {
     }
 };
 
-const uploadProfileImg = async (req, res) => {
-    const user = req.user;
-
+const uploadProfileAndCoverImg = async (req, res) => {
     try {
-        const file = req.file;
-        const result = await cloudinary.uploader.upload(file.path, {
-            folder: "users",
+        const userId = req.user._id;
+
+        let profileImageResult = null;
+        let coverImageResult = null;
+
+        if (req.files.profileImage) {
+            const profileImagePath = req.files.profileImage[0].path;
+            profileImageResult = await cloudinary.uploader.upload(profileImagePath, {
+                folder: 'users/profile',
+            });
+        }
+
+        if (req.files.coverImage) {
+            const coverImagePath = req.files.coverImage[0].path;
+            coverImageResult = await cloudinary.uploader.upload(coverImagePath, {
+                folder: 'users/cover',
+            });
+        }
+
+        const updatedData = {};
+
+        if (profileImageResult) {
+            updatedData.profileImage = [{
+                public_id: profileImageResult.public_id,
+                url: profileImageResult.secure_url,
+            }];
+        }
+
+        if (coverImageResult) {
+            updatedData.coverImage = [{
+                public_id: coverImageResult.public_id,
+                url: coverImageResult.secure_url,
+            }];
+        }
+
+        const user = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+
+        res.status(200).json({
+            message: 'Upload successful',
+            user: user
         });
-        user.img = result.secure_url;
-        await user.save();
-        return res.json({ error: false, myUser: user });
     } catch (error) {
-        return res.status(500).json({ error: true, message: "Internal Server Error" });
+        console.error('Error uploading images:', error);
+        res.status(500).json({ message: 'Error during upload', error });
     }
 };
+
 
 const userController = {
     getUser,
     getProfile,
     updateProfile,
-    uploadProfileImg
+    uploadProfileAndCoverImg
 };
 
 export default userController;
-

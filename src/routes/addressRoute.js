@@ -5,10 +5,12 @@ import adminAuthMiddleware from '../middlewares/adminAuthMiddleware.js';
 
 const router = express.Router();
 
-router.get('/address', authMiddleware, adminAuthMiddleware, addressController.getAddresses);
-router.get('/address/:addressId', authMiddleware, adminAuthMiddleware, addressController.getAddressesById);
-router.post('/address', authMiddleware, addressController.createAddress);
-router.patch('/address/:addressId', authMiddleware, addressController.updateAddress);
-router.delete('/address/:addressId', authMiddleware, addressController.deleteAddress);
+// User routes
+router.get('/address/user', authMiddleware, addressController.getUserAddresses);
+router.post('/address/user', authMiddleware, addressController.createAddress);
+router.patch('/address/user/:id', authMiddleware, addressController.updateUserAddress);
+router.delete('/address/user/:id', authMiddleware, addressController.deleteUserAddress);
+
+
 
 export default router;

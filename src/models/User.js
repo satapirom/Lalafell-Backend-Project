@@ -21,26 +21,23 @@ const UserSchema = new Schema({
         required: true,
         minlength: 8
     },
-    termsAccepted: {
-        type: Boolean,
-        required: true
-    },
-    confirmPassword: {
-        type: String,
-        required: true
-    },
-    profileImage: {
-        type: String,
-        default: '../images/avata-profile.png'  // ตั้งค่าเริ่มต้นสำหรับรูปโปรไฟล์
-    },
-    termsAcceptedAt: {
-        type: Date,
-        default: Date.now
-    },
-    termsVersion: {
-        type: String,
-        default: '1.0'
-    },
+    profileImage: [{
+        public_id: {
+            type: String,
+        },
+        url: {
+            type: String,
+        }
+    }],
+    coverImage: [{
+        public_id: {
+            type: String,
+        },
+        url: {
+            type: String,
+        }
+    }],
 }, { timestamps: true });
 
 export default mongoose.model("User", UserSchema);
+
