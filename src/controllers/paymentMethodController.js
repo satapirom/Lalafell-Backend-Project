@@ -16,20 +16,24 @@ const validatePayMethod = async (req, res, next) => {
     }
 
     if (type === "Credit Card") {
-        if (!cardNumber || !expiryDate) {
-            return res.status(400).json({ error: true, message: "Card number and expiry date are required for credit card payments" });
-        }
-        if (!/^[0-9]{13,19}$/.test(cardNumber)) {
+        // Only check for cardNumber and expiryDate if they are provided in the request
+        if (cardNumber && !/^[0-9]{13,19}$/.test(cardNumber)) {
             return res.status(400).json({ error: true, message: "Invalid card number format" });
         }
-        if (new Date(expiryDate) < new Date()) {
+        if (expiryDate && new Date(expiryDate) < new Date()) {
             return res.status(400).json({ error: true, message: "Expiry date must be in the future" });
         }
     }
 
     if (type === "Bank Account") {
-        if (!bankName || !accountNumber || !accountHolderName) {
-            return res.status(400).json({ error: true, message: "Bank name, account number, and account holder are required for bank account payments" });
+        if (bankName && !bankName.trim()) {
+            return res.status(400).json({ error: true, message: "Bank name is required for bank account payments" });
+        }
+        if (accountNumber && !/^[0-9]{10,20}$/.test(accountNumber)) {
+            return res.status(400).json({ error: true, message: "Invalid account number format" });
+        }
+        if (accountHolderName && !accountHolderName.trim()) {
+            return res.status(400).json({ error: true, message: "Account holder name is required for bank account payments" });
         }
     }
     next();
@@ -132,20 +136,24 @@ const updatePayMethod = async (req, res) => {
         }
 
         // Update common fields
-        payMethod.type = type || payMethod.type;
+        if (type) payMethod.type = type;
+        if (accountHolderName) payMethod.accountHolderName = accountHolderName;
 
         // Update card-specific fields if the type is 'Credit Card'
         if (payMethod.type === 'Credit Card') {
-            payMethod.cardNumber = cardNumber || payMethod.cardNumber;
-            payMethod.expiryDate = expiryDate || payMethod.expiryDate;
-            // Remove billing address update
+            if (cardNumber) {
+                const { encryptedData, iv } = encryptCardNumber(cardNumber);
+                payMethod.cardNumber = encryptedData;
+                payMethod.iv = iv;
+                payMethod.lastFourDigits = getLastFourDigits(cardNumber);
+            }
+            if (expiryDate) payMethod.expiryDate = expiryDate;
         }
 
         // Update bank-specific fields if the type is 'Bank Account'
         if (payMethod.type === 'Bank Account') {
-            payMethod.bankName = bankName || payMethod.bankName;
-            payMethod.accountNumber = accountNumber || payMethod.accountNumber;
-            payMethod.accountHolderName = accountHolderName || payMethod.accountHolderName;
+            if (bankName) payMethod.bankName = bankName;
+            if (accountNumber) payMethod.accountNumber = accountNumber;
         }
 
         const updatedPayMethod = await payMethod.save();
@@ -155,7 +163,6 @@ const updatePayMethod = async (req, res) => {
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
-
 // Get all payment methods for the user
 const getPayMethods = async (req, res) => {
     try {
@@ -224,11 +231,6 @@ const deletePayMethod = async (req, res) => {
         if (!payMethod) {
             return res.status(404).json({ error: true, message: "Payment method not found" });
         }
-
-        if (payMethod.type !== type) {
-            return res.status(400).json({ error: true, message: "Type mismatch" });
-        }
-
         await Paymethod.deleteOne({ _id: id });
         return res.json({ error: false, message: "Payment method deleted successfully" });
     } catch (error) {

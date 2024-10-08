@@ -6,8 +6,8 @@ import adminAuthMiddleware from '../middlewares/adminAuthMiddleware.js';
 const router = express.Router();
 
 router.get('/orders', authMiddleware, adminAuthMiddleware, orderController.getOrders);
-router.post('/order', authMiddleware, orderController.createOrder);
-router.get('/order/:orderId', authMiddleware, orderController.getOrderById);
-router.delete('/order/:orderId', authMiddleware, orderController.deleteOrder);
-
+router.post('/orders', authMiddleware, orderController.createOrder);
+router.get('/order/:orderId', authMiddleware, adminAuthMiddleware, orderController.getOrderById);
+router.patch('/orders/:orderId', authMiddleware, orderController.updateOrder);
+router.delete('/orders/:orderId', authMiddleware, orderController.deleteOrder);
 export default router;

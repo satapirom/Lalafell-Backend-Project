@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
-
 const itemSchema = new Schema({
     product: {
         type: Schema.Types.ObjectId,
@@ -11,9 +10,15 @@ const itemSchema = new Schema({
     quantity: {
         type: Number,
         required: true
+    },
+    price: {
+        type: Number,
+        ref: 'Product',
+        required: true
     }
 });
 
+// Updated orderSchema to accept shippingAddress and paymentMethod as objects
 const orderSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
@@ -30,13 +35,24 @@ const orderSchema = new Schema({
         default: 'pending'
     },
     shippingAddress: {
-        type: String,
-        ref: 'Address',
+        // Define as an object schema instead of a string
+        type: new Schema({
+            name: { type: String, required: true },
+            phone: { type: String, required: true },
+            street: { type: String, required: true },
+            city: { type: String, required: true },
+            country: { type: String, required: true },
+            state: { type: String, required: true },
+            postalCode: { type: String, required: true }
+        }),
         required: true
     },
     paymentMethod: {
-        type: String,
-        ref: 'Paymethod',
+        // Define as an object schema instead of a string
+        type: new Schema({
+            type: { type: String, required: true },
+            details: { type: String, required: true }
+        }),
         required: true
     }
 }, { timestamps: true });
@@ -44,3 +60,4 @@ const orderSchema = new Schema({
 const Order = mongoose.model("Order", orderSchema);
 
 export default Order;
+

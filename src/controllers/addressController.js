@@ -2,8 +2,8 @@ import Address from "../models/Address.js";
 import User from "../models/User.js";
 
 const ValidateAddress = (data) => {
-    const { name, phone, street, city, country, postalCode } = data;
-    if (!name || !phone || !street || !city || !country || !postalCode) {
+    const { name, phone, street, city, country, state, postalCode } = data;
+    if (!name || !phone || !street || !city || !state || !country || !postalCode) {
         return "All fields are required";
     }
     return null;
@@ -15,7 +15,7 @@ const createAddress = async (req, res) => {
         return res.status(400).json({ error: true, message: validationError });
     }
 
-    const { name, phone, street, city, country, postalCode, isDefault } = req.body;
+    const { name, phone, street, city, state, country, postalCode, isDefault } = req.body;
 
     try {
         const userId = req.user._id;
@@ -29,6 +29,7 @@ const createAddress = async (req, res) => {
             name,
             street,
             city,
+            state,
             country,
             postalCode,
             phone,
@@ -56,7 +57,7 @@ const getUserAddresses = async (req, res) => {
 
 const updateUserAddress = async (req, res) => {
     const { id } = req.params;
-    const { name, street, city, country, postalCode, phone, isDefault } = req.body;
+    const { name, street, city, state, country, postalCode, phone, isDefault } = req.body;
 
     console.log('Updating address:', id);
     console.log('Request body:', req.body);
@@ -73,6 +74,7 @@ const updateUserAddress = async (req, res) => {
             name,
             street,
             city,
+            state,
             country,
             postalCode,
             phone,
@@ -115,5 +117,4 @@ const addressController = {
     deleteUserAddress
 };
 export default addressController;
-
 

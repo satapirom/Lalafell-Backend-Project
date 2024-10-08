@@ -11,6 +11,7 @@ import addressRoute from './src/routes/addressRoute.js';
 import payMethodRoute from './src/routes/payMethodRoute.js';
 import checkoutRoute from './src/routes/checkoutRoute.js';
 import reviewRoute from './src/routes/reviewRoute.js';
+import cartRoute from './src/routes/CartRoute.js';
 import bodyParser from 'body-parser';
 
 // admin
@@ -45,6 +46,7 @@ app.use("/", addressRoute);
 app.use("/", payMethodRoute);
 app.use("/", checkoutRoute);
 app.use("/", reviewRoute);
+app.use("/", cartRoute);
 
 // admin
 app.use("/", productsRoute);

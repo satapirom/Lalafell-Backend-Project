@@ -2,9 +2,9 @@ import Order from "../models/Orders.js";
 import Product from "../models/Products.js";
 
 const validateOrderData = (data) => {
-    const { user, items, totalAmount, status, shippingAddress, paymentMethod } = data;
+    const { items, totalAmount, shippingAddress, paymentMethod } = data;
 
-    if (!user || !items || !totalAmount || !status || !shippingAddress || !paymentMethod) {
+    if (!items || !totalAmount || !shippingAddress || !paymentMethod) {
         return "All fields are required";
     }
 
@@ -21,7 +21,12 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ error: true, message: validationError });
     }
 
-    const { user, items, totalAmount, status, shippingAddress, paymentMethod } = req.body;
+    const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
+    const userId = req.user._id;
+
+    // Log for debugging
+    console.log('Shipping Address:', shippingAddress);
+    console.log('Payment Method:', paymentMethod);
 
     try {
         // Check each item in the order
@@ -39,12 +44,12 @@ const createOrder = async (req, res) => {
 
         // Create a new order
         const newOrder = new Order({
-            user: req.body.user,
+            user: userId,
             items,
             totalAmount,
-            status: status || 'pending',
-            shippingAddress,
-            paymentMethod,
+            status: 'pending',
+            shippingAddress: shippingAddress, // Ensure this is an object
+            paymentMethod: paymentMethod, // Ensure this is an object
         });
 
         const savedOrder = await newOrder.save();
@@ -55,6 +60,7 @@ const createOrder = async (req, res) => {
         return res.status(500).json({ error: true, message: "Internal Server Error" });
     }
 };
+
 
 
 const getOrders = async (req, res) => {
@@ -94,6 +100,29 @@ const getOrderById = async (req, res) => {
     }
 };
 
+const updateOrder = async (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    try {
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ error: true, message: "Order not found" });
+        }
+
+        if (status) {
+            order.status = status;
+            await order.save();
+        }
+
+        return res.json({ error: false, order, message: "Order updated successfully" });
+    } catch (error) {
+        console.error(`Error updating order: ${error.message}`);
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
+    }
+}
+
 const deleteOrder = async (req, res) => {
     const { orderId } = req.params;
 
@@ -124,6 +153,7 @@ const OrderController = {
     createOrder,
     getOrders,
     getOrderById,
+    updateOrder,
     deleteOrder
 };
 

@@ -9,7 +9,6 @@ const addressSchema = new Schema({
     phone: {
         type: String,
         required: true,
-        match: [/^\d{10}$/, 'Please enter a valid phone number'],
         maxlength: 10
 
     },
@@ -23,6 +22,10 @@ const addressSchema = new Schema({
     postalCode: {
         type: String,
         required: true,
+    },
+    state: {
+        type: String,
+        required: true
     },
     country: {
         type: String,
