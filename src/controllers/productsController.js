@@ -150,9 +150,43 @@ const getProductFilter = async (req, res) => {
     }
 };
 
-export default {
+const searchProducts = async (req, res) => {
+    const { q: query } = req.query;
+    try {
+        if (!query) {
+            return res.status(400).json({ error: true, message: 'Search query is required' });
+        }
+
+        console.log('Search Query:', query); // Log the search query for debugging
+
+        const searchRegex = new RegExp(query, 'i');
+
+        const products = await Product.find({
+            $or: [
+                { name: { $regex: searchRegex } },  // ค้นหาในชื่อสินค้า
+                { category: { $regex: searchRegex } },
+                { brand: { $regex: searchRegex } },
+                { size: { $regex: searchRegex } },
+                { description: { $regex: searchRegex } }
+            ]
+        }).limit(10);
+
+        console.log('Products found:', products.length); // Log the number of found products
+
+        return res.json({ error: false, products });
+    } catch (error) {
+        console.error("Error searching products:", error.stack); // Log the full error stack
+        return res.status(500).json({ error: true, message: "Internal Server Error" });
+    }
+};
+
+
+const productController = {
     uploadProduct,
     getProducts,
     getProductFilter,
     getProductByID,
+    searchProducts
 };
+
+export default productController;

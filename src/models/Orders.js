@@ -32,7 +32,7 @@ const orderSchema = new Schema({
     },
     status: {
         type: String,
-        default: 'pending'
+        default: 'Payment'
     },
     shippingAddress: {
         // Define as an object schema instead of a string

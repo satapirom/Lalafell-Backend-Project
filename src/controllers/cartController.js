@@ -109,13 +109,21 @@ const cartController = {
                 return res.status(404).json({ error: true, message: "Cart not found" });
             }
 
-            cart.items = cart.items.filter(item => item.product.toString() !== productId);
+            // ตรวจสอบว่ามีสินค้าในตะกร้าหรือไม่
+            const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+            if (itemIndex === -1) {
+                return res.status(404).json({ error: true, message: "Product not found in cart" });
+            }
 
+            // ลบสินค้าจากรายการในตะกร้า
+            cart.items.splice(itemIndex, 1); // ใช้ splice เพื่อลบรายการที่พบ
+
+            // คำนวณยอดรวมและจำนวนสินค้าหลังจากลบ
             const { totalAmount, totalQuantity } = calculateCartTotals(cart);
             cart.totalAmount = totalAmount;
             cart.totalQuantity = totalQuantity;
 
-            await cart.save();
+            await cart.save(); // บันทึกข้อมูลตะกร้าลงฐานข้อมูล
             await cart.populate('items.product');
 
             return res.json({
@@ -127,8 +135,39 @@ const cartController = {
             console.error(`Error removing item from cart: ${error.message}`);
             return res.status(500).json({ error: true, message: 'Internal Server Error' });
         }
+    },
+
+    clearCart: async (req, res) => {
+        const userId = req.user.id;
+        const { productIds } = req.body;
+
+        try {
+            const cart = await Cart.findOne({ user: userId });
+            if (!cart) {
+                return res.status(404).json({ error: true, message: "Cart not found" });
+            }
+
+            // Remove selected items from the cart
+            cart.items = cart.items.filter(item => !productIds.includes(item.product.toString()));
+
+            // Recalculate total amount and quantity
+            cart.totalAmount = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+            cart.totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
+
+            await cart.save();
+
+            return res.json({
+                error: false,
+                message: 'Selected items cleared from cart successfully',
+                cart
+            });
+        } catch (error) {
+            console.error(`Error clearing selected items from cart: ${error.message}`);
+            return res.status(500).json({ error: true, message: 'Internal Server Error' });
+        }
     }
 };
+
 
 function calculateCartTotals(cart) {
     let totalAmount = 0;
