@@ -26,6 +26,6 @@ router.get('/products/filter', authMiddleware, productsController.getProductFilt
 router.get('/products/:id', authMiddleware, productsController.getProductByID);
 
 // Admin routes
-router.post('/products', adminAuthMiddleware, upload.array('images'), productsController.uploadProduct);
+router.post('/products', upload.array('images'), productsController.uploadProduct);
 
 export default router;

@@ -40,8 +40,8 @@ const checkoutSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Completed', 'Cancelled'],
-        default: 'Pending'
+        enum: ['payment', 'to-ship', 'to-receive', 'completed', 'refund/return', 'cancelled'],
+        default: 'payment'
     },
 }, { timestamps: true });
 
