@@ -1,6 +1,7 @@
 import { hashPassword, comparePassword } from '../utils/hash.js';
 import User from '../models/User.js';
 import { sign } from '../utils/token.js';
+import { verify } from '../utils/token.js';
 
 // ลงทะเบียนผู้ใช้
 const register = async (req, res) => {
@@ -98,9 +99,28 @@ const logout = (req, res) => {
     res.status(200).json({ message: "Logout successful" });
 };
 
+// ฟังก์ชันตรวจสอบการ authentication ตรวจสอบ สถานะการเข้าสู่ระบบ เช็คสิทธิ์
+const checkAuth = (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: true, message: "Unauthorized" });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = verify(token); // ตรวจสอบ token
+        return res.status(200).json({ error: false, message: "Authenticated", userId: decoded.userId });
+    } catch (error) {
+        return res.status(401).json({ error: true, message: "Invalid token" });
+    }
+};
+
 export default {
     register,
     login,
-    logout
+    logout,
+    checkAuth
 };
 

@@ -31,7 +31,7 @@ if (!process.env.MONGO_URI) {
 
 // Middleware
 app.use(cors({
-    origin: "http://localhost:5173", // Ensure this matches your frontend's URL
+    origin: "*", // Ensure this matches your frontend's URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
